@@ -1,0 +1,117 @@
+{
+  "_version": "1.65.0",
+  "sap.app": {
+    "id": "comxcaretrepactiv.comxcaretrepactiv",
+    "type": "application",
+    "i18n": "i18n/i18n.properties",
+    "applicationVersion": {
+      "version": "0.0.1"
+    },
+    "title": "{{appTitle}}",
+    "description": "{{appDescription}}",
+    "resources": "resources.json",
+    "sourceTemplate": {
+      "id": "@sap/generator-fiori:basic",
+      "version": "1.18.0",
+      "toolsId": "1a8a594b-5540-4c25-a578-f0f924d6d6af"
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "ZSOCOMXCARETREPACTIV-view": {
+          "semanticObject": "ZSOCOMXCARETREPACTIV",
+          "action": "view",
+          "title": "{{ZSOCOMXCARETREPACTIV-view.flpTitle}}",
+          "subTitle": "{{ZSOCOMXCARETREPACTIV-view.flpSubtitle}}",
+          "icon": "sap-icon://activity-assigned-to-goal",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "icons": {
+      "icon": "sap-icon://activity-assigned-to-goal",
+      "favIcon": "",
+      "phone": "",
+      "phone@2": "",
+      "tablet": "",
+      "tablet@2": ""
+    },
+    "deviceTypes": {
+      "desktop": true,
+      "tablet": true,
+      "phone": true
+    }
+  },
+  "sap.ui5": {
+    "flexEnabled": true,
+    "dependencies": {
+      "minUI5Version": "1.136.2",
+      "libs": {
+        "sap.m": {},
+        "sap.ui.core": {}
+      }
+    },
+    "contentDensities": {
+      "compact": true,
+      "cozy": true
+    },
+    "models": {
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": {
+          "bundleName": "comxcaretrepactiv.comxcaretrepactiv.i18n.i18n"
+        }
+      }
+    },
+    "resources": {
+      "css": [
+        {
+          "uri": "css/style.css"
+        }
+      ]
+    },
+    "routing": {
+      "config": {
+        "routerClass": "sap.m.routing.Router",
+        "controlAggregation": "pages",
+        "controlId": "app",
+        "transition": "slide",
+        "type": "View",
+        "viewType": "XML",
+        "path": "comxcaretrepactiv.comxcaretrepactiv.view",
+        "async": true,
+        "viewPath": "comxcaretrepactiv.comxcaretrepactiv.view"
+      },
+      "routes": [
+        {
+          "name": "RouteMain",
+          "pattern": ":?query:",
+          "target": [
+            "TargetMain"
+          ]
+        }
+      ],
+      "targets": {
+        "TargetMain": {
+          "id": "Main",
+          "name": "Main"
+        }
+      }
+    },
+    "rootView": {
+      "viewName": "comxcaretrepactiv.comxcaretrepactiv.view.App",
+      "type": "XML",
+      "id": "App",
+      "async": true
+    }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "comxcaretrepactivcomxcaretrepactiv"
+  }
+}

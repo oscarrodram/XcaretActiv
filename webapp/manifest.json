@@ -49,6 +49,9 @@
   },
   "sap.ui5": {
     "flexEnabled": true,
+    "resourceRoots": {
+      "jspdf": "./node_modules/jspdf/dist"
+    },
     "dependencies": {
       "minUI5Version": "1.136.2",
       "libs": {

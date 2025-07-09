@@ -61,7 +61,6 @@
                                 </tokens>
                             </MultiInput>
                         </VBox>
-                        
                         <VBox id="vboxFiltroCreadoPor" width="220px" class="sapUiSmallMarginBegin" visible="{visibility>/filtroCreadoPor}">
                             <Label id="labelCreadoPor" text="{i18n>filtroCreadoPor}"/>
                             <MultiInput id="multiInputCreadoPor"
@@ -119,12 +118,12 @@
                         <uiTable:Column id="colDocMaterial" width="10rem" filterProperty="MBLRN" visible="{columnVisibility>/colDocMaterial}">
                             <Label id="labelColDocMaterial" text="{i18n>colDocMaterial}"/>
                             <uiTable:template>
-                                <Text id="txtColDocMaterial" text="{MBLRN}" />
-                                <!--<Link id="linkColDocMaterial"
+                                <!--<Text id="txtColDocMaterial" text="{MBLRN}" />-->
+                                <Link id="linkColDocMaterial"
                                     text="{MBLRN}"
-                                    press=".onDocMaterialPress"
+                                    press=".onGetMatDocData"
                                     tooltip="Ver PDF"
-                                    enabled="{= !!${MBLRN} }"/>-->
+                                    enabled="{= !!${MBLRN} }"/>
                             </uiTable:template>
                         </uiTable:Column>
                         <uiTable:Column id="colPosDocumento" width="11.25rem" filterProperty="LINE_ID" visible="{columnVisibility>/colPosDocumento}">

@@ -1,1 +1,6 @@
 /* Enter your custom styles here */
+
+iframe {
+    width: 100%;
+    height: 500px;
+}

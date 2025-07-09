@@ -33,6 +33,8 @@ sap.ui.define([
 
         _sFixedAssetsReportServiceUrl: "https://experiencias-xcaret-parques-s-a-p-i-de-c-v--xc-btpdev-15aca4ac6.cfapps.us10-001.hana.ondemand.com/FixedAssetReport",
 
+        _sSignsPdfServiceUrl: "https://experiencias-xcaret-parques-s-a-p-i-de-c-v--xc-btpdev-15aca4ac6.cfapps.us10-001.hana.ondemand.com/ImageSignItem",
+
         /**
          * Genera una cadena de filtro OData basada en el valor de un control de entrada (Input o MultiInput).
          * @param {sap.ui.core.Control} oView - La vista actual.
@@ -79,8 +81,11 @@ sap.ui.define([
             var currentUrl = window.location.href || "";
             if (currentUrl.includes("xc-btpdev")) {
                 this._sFixedAssetsReportServiceUrl = "https://experiencias-xcaret-parques-s-a-p-i-de-c-v--xc-btpdev-15aca4ac6.cfapps.us10-001.hana.ondemand.com/FixedAssetReport";
+                this._sSignsPdfServiceUrl = "https://experiencias-xcaret-parques-s-a-p-i-de-c-v--xc-btpdev-15aca4ac6.cfapps.us10-001.hana.ondemand.com/ImageSignItem";
+
             } else if (currentUrl.includes("qas-btp")) {
                 this._sFixedAssetsReportServiceUrl = "https://node.cfapps.us10-001.hana.ondemand.com/FixedAssetReport";
+                this._sSignsPdfServiceUrl = "https://node.cfapps.us10-001.hana.ondemand.com/ImageSignItem";
             }
 
             // Inicializa el modelo 'visibility' para controlar la visibilidad de los filtros
@@ -92,7 +97,7 @@ sap.ui.define([
                 oVisibility[sKey] = true;
             });
             this.getView().setModel(new sap.ui.model.json.JSONModel(oVisibility), "visibility");
-            
+
             // Inicializa el modelo 'multiSelect' con arrays vacíos SOLO para los filtros de tipo MultiInput (type: "multi")
             var oInitialMultiSelectData = {};
             this.aAllFilters.forEach(function (filter) {
@@ -163,6 +168,7 @@ sap.ui.define([
          * Realiza la búsqueda de cotizaciones basándose en los filtros actuales.
          * Construye la URL OData y actualiza la tabla y el total.
          */
+        /*
         onSearchFixedAssets: function () {
             var oView = this.getView();
             var aFilters = [];
@@ -239,6 +245,171 @@ sap.ui.define([
             fetch(sUrl)
                 .then(function (response) { return response.json(); })
                 .then(function (data) {
+                    console.log(data)
+                    var oDataResult = { items: data.result };
+                    var oModel = new sap.ui.model.json.JSONModel(oDataResult);
+                    that.getView().byId("tablaReporteRecActivosFijos").setModel(oModel);
+
+                    // Si necesitas el cálculo de totales, descomenta y ajusta el bloque siguiente
+                    
+                    //var nGrandTotal = 0;
+                    //(data.result || []).forEach(function (item) {
+                    //    var val = parseFloat(item.TOTAL);
+                    //    if (!isNaN(val)) nGrandTotal += val;
+                    //});
+                    //var oTotalsModel = new sap.ui.model.json.JSONModel({ grandTotal: nGrandTotal.toFixed(2) });
+                    //that.getView().setModel(oTotalsModel, "totals");
+                    
+
+                    if (oDataResult.items.length > 0) {
+                        if (!that._bIsFirstSearch) {
+                            sap.m.MessageToast.show("Información encontrada con los criterios de búsqueda");
+                        }
+                    } else {
+                        if (!that._bIsFirstSearch) {
+                            sap.m.MessageToast.show("No se encontraron datos con los criterios de búsqueda");
+                        }
+                    }
+                    that._bIsFirstSearch = false;
+                })
+                .catch(function (error) {
+                    sap.m.MessageToast.show("Ocurrió un error al consultar la información o no se encontraron datos con los criterios de búsqueda");
+                });
+        },
+        */
+        onSearchFixedAssets: function () {
+            var oView = this.getView();
+            var aFilters = [];
+
+            // === Filtros MultiInput generales (excepto CreadoPor) ===
+            var oCampos = [
+                { inputId: "multiInputDocumentoMaterial", odata: "ASEG.MBLRN" },
+                { inputId: "multiInputMaterial", odata: "MARA.NAME" },
+                { inputId: "multiInputTipoProgramacion", odata: "ASEG.PROGN" }
+            ];
+
+            // === Filtros por fechas ===
+            var drsFechaContabilizacion = oView.byId("dateRangeContabilizacion");
+            if (drsFechaContabilizacion) {
+                var dFrom = drsFechaContabilizacion.getDateValue();
+                var dTo = drsFechaContabilizacion.getSecondDateValue();
+                if (dFrom && dTo) {
+                    var sFrom = dFrom.toISOString().slice(0, 10);
+                    var sTo = dTo.toISOString().slice(0, 10);
+                    aFilters.push("(AKPF.BUDAT BETWEEN DATE '" + sFrom + "' AND DATE '" + sTo + "')");
+                } else if (dFrom) {
+                    var sFrom = dFrom.toISOString().slice(0, 10);
+                    aFilters.push("AKPF.BUDAT EQ '" + sFrom + "'");
+                } else if (dTo) {
+                    var sTo = dTo.toISOString().slice(0, 10);
+                    aFilters.push("AKPF.BUDAT EQ '" + sTo + "'");
+                }
+            }
+
+            // Fecha de creación
+            var drsFechaCreacion = oView.byId("datePickerFechaCreacion");
+            if (drsFechaCreacion) {
+                var dFromC = drsFechaCreacion.getDateValue();
+                var dToC = drsFechaCreacion.getSecondDateValue && drsFechaCreacion.getSecondDateValue();
+                if (dFromC && dToC) {
+                    var sFromC = dFromC.toISOString().slice(0, 10);
+                    var sToC = dToC.toISOString().slice(0, 10);
+                    aFilters.push("(AKPF.BUDAT BETWEEN DATE '" + sFromC + "' AND DATE '" + sToC + "')");
+                } else if (dFromC) {
+                    var sFromC = dFromC.toISOString().slice(0, 10);
+                    aFilters.push("AKPF.BUDAT EQ '" + sFromC + "'");
+                } else if (dToC) {
+                    var sToC = dToC.toISOString().slice(0, 10);
+                    aFilters.push("AKPF.BUDAT EQ '" + sToC + "'");
+                }
+            }
+
+            // === Filtro especial para multiInputCreadoPor con nombre y apellido ===
+            var oMultiModel = oView.getModel("multiSelect");
+            var aCreadoPor = oMultiModel.getProperty("/multiInputCreadoPor") || [];
+            if (Array.isArray(aCreadoPor) && aCreadoPor.length > 0) {
+                var aAndFilters = aCreadoPor.map(function (fullName) {
+                    var partes = fullName.trim().split(" ");
+                    var nombre = partes[0];
+                    var apellido = partes.slice(1).join(" ");
+                    nombre = String(nombre).replace(/'/g, "''");
+                    apellido = String(apellido).replace(/'/g, "''");
+                    return "(TUSR1.NAME EQ '" + nombre + "' AND TUSR1.LNAME EQ '" + apellido + "')";
+                });
+                aFilters.push(aAndFilters.join(' or '));
+            }
+
+            // === Filtros MultiInput ===
+            oCampos.forEach(function (campo) {
+                var filtro = this.getODataFilter(oView, campo.inputId, campo.odata);
+                if (filtro) aFilters.push(filtro);
+            }, this);
+
+            // === Construcción final del filtro OData ===
+            var sFilter = aFilters.length ? "$filter=" + aFilters.join(' and ') : "";
+            var sUrl = this._sFixedAssetsReportServiceUrl + (sFilter ? "?" + sFilter : "");
+
+            var that = this;
+            fetch(sUrl)
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    // === CONVERSIÓN DE CAMPOS A STRING ===
+                    var stringFields = [
+                        "POSTING_DATE",
+                        "MBLRN",
+                        "LINE_ID",
+                        "CONT",
+                        "MJAHR",
+                        "SUPPLIER_NAME",
+                        "CONTRACT_NAME",
+                        "PROGN",
+                        "PROGP",
+                        "PROJECT_ID",
+                        "PROJECT_NAME",
+                        "MATNR",
+                        "MATERIAL_NAME",
+                        "ERFMG",
+                        "ERFME",
+                        "UNIT_PRICE",
+                        "CURRENCY_CODE",
+                        "CATEGORY_DESC",
+                        "FAMILY_DESC",
+                        "MAT_BRAND",
+                        "MAT_MODEL",
+                        "MAT_DIMENSIONS",
+                        "MAT_STANDARD",
+                        "MAT_FIXED_ASSET",
+                        "MAT_PATRIMONIO",
+                        "MAT_SPECIAL",
+                        "REQ_FFE",
+                        "REQ_DIVISION_DESC",
+                        "REQ_AREA_DESC",
+                        "REQ_UBICA",
+                        "REQ_SUBUBICA",
+                        "REQ_SUMIN_DESC",
+                        "REQ_VISTA_DESC",
+                        "SYNCRO_DESC",
+                        "FIXEDASSET",
+                        "SERIE",
+                        "CREATION_NAME",
+                        "CREATION_LNAME",
+                        "CREATION_EMAIL",
+                        "MODIFY_NAME",
+                        "MODIFY_LNAME",
+                        "MODIFY_EMAIL",
+                        "MODIFIED_AT"
+                    ];
+
+                    (data.result || []).forEach(function (item) {
+                        stringFields.forEach(function (field) {
+                            if (item[field] !== undefined && item[field] !== null) {
+                                item[field] = String(item[field]);
+                            } else {
+                                item[field] = "";
+                            }
+                        });
+                    });
+
                     var oDataResult = { items: data.result };
                     var oModel = new sap.ui.model.json.JSONModel(oDataResult);
                     that.getView().byId("tablaReporteRecActivosFijos").setModel(oModel);
@@ -432,6 +603,7 @@ sap.ui.define([
             oDialog.setModel(oDialogModel);
             oDialog.open();
         },
+
 
         /**
          * Maneja el evento `tokenUpdate` de los controles `sap.m.MultiInput`.
@@ -791,40 +963,267 @@ sap.ui.define([
                 oSheet.destroy();
             });
         },
+        /*
+        // Cuando se sabe si la imagen es jpeg o png
+        onPressGeneratePDF: async function () {
+            let pdfUrl = null; // Declarar pdfUrl fuera del try para que sea accesible en afterClose y en la función de descarga
 
-        onDocMaterialPress: function (oEvent) {
-            var sUrl = "https://www.orimi.com/pdf-test.pdf";
-
-            // Si ya existe el dialog, lo reusa
-            if (!this._oPdfDialog) {
-                this._oPdfDialog = new sap.m.Dialog({
-                    title: "Documento PDF",
-                    contentWidth: "80%",
-                    contentHeight: "90%",
-                    resizable: true,
-                    draggable: true,
-                    content: [
-                        new sap.ui.core.HTML({
-                            content: '<iframe src="' + sUrl + '" width="100%" height="600px" style="border: none;"></iframe>'
-                        })
-                    ],
-                    beginButton: new sap.m.Button({
-                        text: "Cerrar",
-                        press: function () {
-                            this._oPdfDialog.close();
-                        }.bind(this)
-                    }),
-                    afterClose: function () {
-                        // Limpia el contenido para forzar recarga del PDF si se vuelve a abrir
-                        this._oPdfDialog.destroy();
-                        this._oPdfDialog = null;
-                    }.bind(this)
+            try {
+                // 1. Obtener el PDF de tu servicio Node.js
+                const response = await fetch("https://web-service-pdfgen-nodejs.cfapps.us10-001.hana.ondemand.com/generar-pdf-desde-imagen", { // Ajusta la URL de tu servicio Node.js
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ base64Image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==" }) // Envía tu imagen base64
                 });
-                this.getView().addDependent(this._oPdfDialog);
-            }
-            this._oPdfDialog.open();
-        }
 
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const pdfBlob = await response.blob();
+                pdfUrl = URL.createObjectURL(pdfBlob); // Asignar a la variable declarada
+
+                // 2. Crear el contenido HTML con el iframe
+                const htmlContent = `<iframe src="${pdfUrl}" width="100%" height="100%" style="border: none;"></iframe>`;
+
+                // 3. Crear y abrir el Dialog con sap.ui.core.HTML
+                if (!this._pdfViewerDialog) {
+                    this._pdfViewerDialog = new sap.m.Dialog({
+                        title: "Visualizador de PDF",
+                        contentWidth: "50%",
+                        content: new sap.ui.core.HTML({
+                            content: htmlContent,
+                            preferDOM: true, // Asegura que el iframe se renderice correctamente
+                            style: "width: 100%; height: 100%; display: block;" // Para que ocupe toda la altura
+                        }),
+                        buttons: [
+                            // Botón para Descargar PDF
+                            new sap.m.Button({
+                                text: "Descargar PDF",
+                                icon: "sap-icon://download", // Icono de descarga
+                                press: function () {
+                                    // Crear un enlace temporal para la descarga
+                                    const a = document.createElement('a');
+                                    a.href = pdfUrl;
+                                    a.download = 'documento_generado.pdf'; // Nombre del archivo a descargar
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a); // Limpiar el enlace
+                                }
+                            }),
+                            // Botón para Cerrar Diálogo
+                            new sap.m.Button({
+                                text: "Cerrar",
+                                press: function () {
+                                    this._pdfViewerDialog.close();
+                                }.bind(this)
+                            })
+                        ],
+                        // El afterClose es crucial para liberar la URL del objeto
+                        afterClose: function () {
+                            if (pdfUrl) {
+                                URL.revokeObjectURL(pdfUrl);
+                                pdfUrl = null; // Limpiar la variable
+                            }
+                        }
+                    });
+                    this.getView().addDependent(this._pdfViewerDialog);
+                } else {
+                    // Si el diálogo ya existe, actualizar el contenido del HTML
+                    const oldContent = this._pdfViewerDialog.getContent()[0].getContent();
+                    const oldUrlMatch = oldContent.match(/src="(blob:.*?)"/);
+                    if (oldUrlMatch && oldUrlMatch[1]) {
+                        URL.revokeObjectURL(oldUrlMatch[1]);
+                    }
+
+                    this._pdfViewerDialog.getContent()[0].setContent(htmlContent);
+                    // No necesitamos ajustar el afterClose aquí si el diálogo se reutiliza,
+                    // ya que la nueva pdfUrl se gestionará cuando se cierre el diálogo actual.
+                    // Si la gestión de _pdfViewerDialog se vuelve compleja con reutilización,
+                    // considera recrear el diálogo o resetearlo completamente.
+                }
+
+                this._pdfViewerDialog.open();
+
+            } catch (error) {
+                console.error("Error al cargar o mostrar el PDF:", error);
+                sap.m.MessageToast.show("No se pudo cargar el PDF.");
+                if (pdfUrl) { // Asegurarse de liberar la URL si hubo un error antes de abrir el diálogo
+                    URL.revokeObjectURL(pdfUrl);
+                }
+            }
+        },
+        */
+
+        onGetMatDocData: async function (oEvent) {
+            var oLink = oEvent.getSource();
+            var oContext = oLink.getBindingContext();
+            var oRowData = oContext.getObject();
+            var sMBLRN = oRowData.MBLRN;
+
+            var sUrl = this._sSignsPdfServiceUrl + "/" + sMBLRN;
+
+            var that = this;
+            fetch(sUrl)
+                .then(function (response) {
+                    if (!response.ok) { // <-- Aquí validas el status (200-299 es ok)
+                        throw new Error("HTTP error, status = " + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    that.onPressGeneratePDF(data);
+                })
+                .catch(function (error) {
+                    sap.m.MessageToast.show("No se encontraron datos");
+                });
+        },
+
+        onPressGeneratePDF: async function (imagesArr) {
+
+            let pdfUrl = null;
+
+            try {
+                // *** DATOS DE LAS IMÁGENES Y SUS TEXTOS ***
+                // Aquí debes reemplazar las cadenas Base64 y los textos según tus necesidades.
+                // Asegúrate de que las cadenas Base64 sean PURAS (sin "data:image/png;base64,").
+                const imagesData = [
+                    {
+                        base64: "",
+                        text: "Dirección de Pre-Aperturas"
+                    },
+                    {
+                        base64: "",
+                        text: "Gerencia Operaciones" // Puedes usar \n para saltos de línea
+                    },
+                    {
+                        base64: "",
+                        text: "Activos Fijos Hotel"
+                    },
+                    {
+                        base64: "",
+                        text: "Gerencia de Equipamiento Xdifica"
+                    },
+                    {
+                        base64: "",
+                        text: "Coordinación de Equipamiento Xdifica"
+                    }
+                    // Agrega más objetos según la cantidad de imágenes que necesites
+                ];
+
+                // Rellenar imagesData con los datos recibidos (máx 5)
+                if (imagesArr.images && Array.isArray(imagesArr.images)) {
+                    for (let i = 0; i < imagesData.length; i++) {
+                        if (imagesArr.images[i] && imagesArr.images[i].data) {
+                            imagesData[i].base64 = imagesArr.images[i].data;
+                        } else {
+                            imagesData[i].base64 = ""; // o null, según lo que esperes en el backend
+                        }
+                    }
+                }
+
+                // *** OPCIONES DE FORMATO DEL PDF ***
+                const pdfConfiguration = {
+                    pageSize: 'A4',       // 'A4', 'Letter', etc. o [width, height] en puntos.
+                    pageOrientation: 'portrait', // 'portrait' o 'landscape'
+                    imageScale: 0.7,      // Escala general de las imágenes. Ajusta si las imágenes son muy grandes/pequeñas.
+                    padding: 50,          // Margen general de la página.
+                    imageTextSpacing: 10, // Espacio en puntos entre la imagen y su texto
+                    grid: {
+                        columns: 2,       // Número de columnas por página (como tu ejemplo)
+                        rowsPerPage: 3    // Número de filas de imágenes por página
+                    },
+                    fontFamily: 'Helvetica', // La fuente debe ser una de StandardFonts de pdf-lib
+                    fontSize: 10,
+                    textColor: { r: 0, g: 0, b: 0 } // RGB para el color del texto (negro)
+                };
+
+                // 1. Obtener el PDF de tu servicio Node.js
+                const response = await fetch("https://web-service-pdfgen-nodejs.cfapps.us10-001.hana.ondemand.com/generar-pdf-desde-imagen", { // Ajusta la URL
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json", // Vuelve a JSON
+                        // Si todas tus imágenes son del mismo formato, puedes enviar un X-Image-Format general.
+                        // Si no, la detección en el backend con sharp es la mejor opción.
+                        // "X-Image-Format": "octet-stream" // O "png", "jpeg"
+                    },
+                    body: JSON.stringify({
+                        images: imagesData,  // Envía el array de imágenes
+                        pdfOptions: pdfConfiguration
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
+                }
+
+                const pdfBlob = await response.blob();
+                pdfUrl = URL.createObjectURL(pdfBlob);
+
+                // 2. Crear el contenido HTML con el iframe
+                const htmlContent = `<iframe src="${pdfUrl}"></iframe>`;
+
+                // 3. Crear y abrir el Dialog con sap.ui.core.HTML (el código existente es bueno)
+                if (!this._pdfViewerDialog) {
+                    this._pdfViewerDialog = new sap.m.Dialog({
+                        title: "Visualizador de PDF",
+                        contentWidth: "50%",
+                        content: new sap.ui.core.HTML({
+                            content: htmlContent,
+                            preferDOM: true,
+                            style: "width: 100%; height: 100%; display: block;"
+                        }),
+                        buttons: [
+                            new sap.m.Button({
+                                text: "Descargar PDF",
+                                icon: "sap-icon://download",
+                                press: function () {
+                                    const a = document.createElement('a');
+                                    a.href = pdfUrl;
+                                    a.download = 'documento_multi_imagen.pdf';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                }
+                            }),
+                            new sap.m.Button({
+                                text: "Cerrar",
+                                press: function () {
+                                    this._pdfViewerDialog.close();
+                                }.bind(this)
+                            })
+                        ],
+                        afterClose: function () {
+                            if (pdfUrl) {
+                                URL.revokeObjectURL(pdfUrl);
+                                pdfUrl = null;
+                            }
+                        }
+                    });
+                    this.getView().addDependent(this._pdfViewerDialog);
+                } else {
+                    const oldContent = this._pdfViewerDialog.getContent()[0].getContent();
+                    const oldUrlMatch = oldContent.match(/src="(blob:.*?)"/);
+                    if (oldUrlMatch && oldUrlMatch[1]) {
+                        URL.revokeObjectURL(oldUrlMatch[1]);
+                    }
+                    this._pdfViewerDialog.getContent()[0].setContent(htmlContent);
+                }
+
+                this._pdfViewerDialog.open();
+
+            } catch (error) {
+                console.error("Error al cargar o mostrar el PDF:", error);
+                sap.m.MessageToast.show("No se pudo cargar el PDF. Detalle: " + error.message);
+                if (pdfUrl) {
+                    URL.revokeObjectURL(pdfUrl);
+                }
+            }
+
+        }
 
     });
 });

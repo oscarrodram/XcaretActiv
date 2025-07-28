@@ -30,6 +30,8 @@ sap.ui.define([
                 _sFixedAssetsReportServiceUrl = "https://experiencias-xcaret-parques-s-a-p-i-de-c-v--xc-btpdev-15aca4ac6.cfapps.us10-001.hana.ondemand.com/FixedAssetReport";
             } else if (currentUrl.includes("qas-btp")) {
                 _sFixedAssetsReportServiceUrl = "https://node.cfapps.us10-001.hana.ondemand.com/FixedAssetReport";
+            } else if (currentUrl.includes("prd")) {
+                _sFixedAssetsReportServiceUrl = "https://node-api-prd.cfapps.us10-001.hana.ondemand.com";
             }
 
             // Fetch inicial al iniciar la app

@@ -86,6 +86,9 @@ sap.ui.define([
             } else if (currentUrl.includes("qas-btp")) {
                 this._sFixedAssetsReportServiceUrl = "https://node.cfapps.us10-001.hana.ondemand.com/FixedAssetReport";
                 this._sSignsPdfServiceUrl = "https://node.cfapps.us10-001.hana.ondemand.com/ImageSignItem";
+            } else if (currentUrl.includes("prd")) {
+                this._sFixedAssetsReportServiceUrl = "https://node-api-prd.cfapps.us10-001.hana.ondemand.com";
+                this._sSignsPdfServiceUrl = "https://node.cfapps.us10-001.hana.ondemand.com/ImageSignItem";
             }
 
             // Inicializa el modelo 'visibility' para controlar la visibilidad de los filtros
@@ -569,13 +572,17 @@ sap.ui.define([
 
             var oTemplate = new sap.m.StandardListItem({
                 title: "{text}",
-                description: sInputId === "multiInputCreadoPor" ? "{text}" : "{key}",
+                description: sInputId === "multiInputCreadoPor" ? "{text}" : "{key}"
+
+                // Revisar para el campo Número de material y Programación
+                /*
                 selected: {
                     path: "key",
                     formatter: function (sKey) {
                         return aCurrentSelectedKeys.includes(sKey);
                     }
                 }
+                */
             });
 
             var oDialog = new sap.m.SelectDialog({
